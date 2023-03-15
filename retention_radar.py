@@ -6,11 +6,12 @@ from sklearn.model_selection import train_test_split
 import os
 import logging
 
-# may put this function in another utility file
+
 def import_tensorflow():
     # Filter tensorflow version warnings
     # https://stackoverflow.com/questions/40426502/is-there-a-way-to-suppress-the-messages-tensorflow-prints/40426709
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     
     import warnings
     # https://stackoverflow.com/questions/15777951/how-to-suppress-pandas-future-warning
@@ -24,8 +25,9 @@ def import_tensorflow():
     tf.get_logger().setLevel(logging.ERROR)
     
     return tf
+tf = import_tensorflow()  
 
-def preprocess_data(file_name):
+def load_train_test(file_name):
     dataset = pd.read_csv(file_name)
     
     #Start with credit score (index 3)
@@ -55,14 +57,33 @@ def preprocess_data(file_name):
     
     return (features_train, features_test, results_train, results_test)
 
+def create_ann():
+    # Initializing the ANN
+    ann = tf.keras.models.Sequential()
+    
+    # Adding the input layer and the first hidden layer
+    ann.add(tf.keras.layers.Dense(units=6, activation='relu'))
+    
+    # Adding the second hidden layer
+    ann.add(tf.keras.layers.Dense(units=6, activation='relu'))
+    
+    # Adding the output layer
+    ann.add(tf.keras.layers.Dense(units=1, activation='sigmoid'))
+    
+    return ann
+
+def train(ann):
+    # Compiling the ANN
+    ann.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+    
+    # Training the ANN on the Training set
+    ann.fit(features_train, results_train, batch_size = 32, epochs = 100)
 
 
 if __name__ == "__main__":
-    # replace `import tensorflow as tf` with this line
-    # or insert this line at the beginning of the `__init__.py` of a package that depends on tensorflow
-    tf = import_tensorflow()  
-    
     logging.basicConfig(format='\n%(message)s\n', level=logging.DEBUG)
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     logging.debug(tf.__version__)
-    preprocess_data('Churn_Modelling.csv')
+    
+    features_train, features_test, results_train, results_test = load_train_test('Churn_Modelling.csv')
+    create_ann()
