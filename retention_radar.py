@@ -120,5 +120,3 @@ if __name__ == "__main__":
     logging.info(f'Will customer leave bank? {prediction}')
     
     rr.test()
-    
-    
